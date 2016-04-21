@@ -4,8 +4,8 @@ var inquirer = require('inquirer');
 
 // MENU CHOICES
 var menuChoices = [
-    {name: 'Show homepage', value: 'HOMEPAGE'},
-    {name: 'Show sorted homepage', value: 'SORTEDHOMEPAGE'},
+    {name: 'Show homepage posts', value: 'HOMEPAGE'},
+    {name: 'Show sorted homepage posts', value: 'SORTEDHOMEPAGE'},
     {name: 'Show subreddit', value: 'SUBREDDIT'},
     {name: 'Show sorted subreddit', value: 'SORTEDSUBREDDIT'},
     {name: 'List subreddits', value: 'LISTSUBREDDITS'},
@@ -23,11 +23,7 @@ function menu() {
   }).then(
     function(choice) {
       if (choice.menu === "HOMEPAGE") {
-        getHomepage(function(posts) {
-          console.log("Posts: ");
-          console.log(posts);
-          menu();
-        });
+        getPostsList("https://www.reddit.com");
       }
       else if (choice.menu === "SORTEDHOMEPAGE") {
         sortedMenu();
@@ -51,6 +47,80 @@ function menu() {
 // Main menu first call, starts program
 menu();
 
+// makes a choice menu using the listed posts
+function getPostsList(address) {
+  request(address+"/.json", function(err, result) {
+    var resultObject = JSON.parse(result.body);
+    var postChoices = [];
+
+    // making an object for each post
+    var postObj = {};
+    resultObject.data.children.forEach(function(post) {
+      postObj = {
+        name: post.data.title,
+        value: "https://www.reddit.com" + post.data.permalink
+      };
+      // push each object into the choices menu array
+      postChoices.push(postObj);
+    });
+
+    // pushing more options to the menu
+    postChoices.push(
+      new inquirer.Separator(), {
+        name: 'Go back to main menu',
+        value: 'BACK'
+      }, {
+        name: 'Quit',
+        value: 'QUIT'
+      },
+      new inquirer.Separator()
+    );
+
+    // calls the list of posts from the chosen page
+    postsList();
+
+    function postsList() {
+      inquirer.prompt({
+        type: 'list',
+        name: 'postlist',
+        message: 'Which post from the list would you like to view?',
+        choices: postChoices
+      }).then(function(choice) {
+        if (choice.postlist === "BACK") {
+          menu();
+        }
+        else if (choice.postlist === "QUIT") {
+          return;
+        }
+        else {
+          // calls the function to display the posts of the chosen subreddit
+          getPosts(choice.postlist, function(posts) {
+            console.log("\033c"); // clears console
+            console.log("Posts: ");
+            console.log(posts);
+            postsList();
+          });
+        }
+      });
+    }
+  });
+}
+
+function getPosts(address, callback) {
+  request(address+".json", function(err, result) {
+    var resultObject = JSON.parse(result.body);
+    
+    // making an object for each post
+    var postObj = {
+      Title: resultObject[0].data.children[0].data.title,
+      by: resultObject[0].data.children[0].data.author,
+      url: "https://www.reddit.com" + resultObject[0].data.children[0].data.permalink,
+      votes: resultObject[0].data.children[0].data.ups
+    };
+    callback(postObj);
+  });
+}
+
 /*
 This function should "return" the default homepage posts as an array of objects
 */
@@ -58,7 +128,7 @@ function getHomepage(callback) {
   var address = "https://www.reddit.com/.json";
   request(address, function(err, result) {
     var resultObject = JSON.parse(result.body);
-
+    console.log(resultObject);
     // making an object for each post
     var postObj = {};
     resultObject.data.children.forEach(function(post) {
