@@ -72,10 +72,12 @@ This function should "return" the default homepage posts as an array of objects.
 In contrast to the `getHomepage` function, this one accepts a `sortingMethod` parameter.
 */
 var sortedMenuChoices = [
+    {name: 'Show Hot', value: 'HOT'},
     {name: 'Show New', value: 'NEW'},
     {name: 'Show Rising', value: 'RISING'},
     {name: 'Show Controversial', value: 'CONTROVERSIAL'},
-    {name: 'Show Top', value: 'TOP'}
+    {name: 'Show Top', value: 'TOP'},
+    {name: 'Quit', value: 'QUIT'}
 ];
 
 function sortedMenu() {
@@ -86,6 +88,9 @@ function sortedMenu() {
       choices: sortedMenuChoices
     }).then(
         function(choice) {
+            if (choice.sorted === "QUIT") {
+                return;
+            }
             getSortedHomepage(choice.sorted, function(posts) {
                 console.log("Posts: ");
                 console.log(posts);
@@ -141,18 +146,26 @@ function getSubreddit(subreddit, callback) {
     request(address, function(err, result) {
     	var resultObject = JSON.parse(result.body);
         
-        // making an object for each post
-    	var postObj = {};
-    	resultObject.data.children.forEach(function(post) {
-        	postObj[post.data.title.substring(0, 25)+"..."] = {
-        	    Title: post.data.title,
-        	    by: post.data.author,
-        	    url: "https://www.reddit.com" + post.data.permalink,
-        	    votes: post.data.ups
-    	    };
-    	});
-    	callback(postObj);
-    	menu();
+        if (resultObject.error) {
+    	    console.log("We couldn't find anything related to your request.");
+    	    menu();
+    	} else if (resultObject.data.children === 0) {
+    	    console.log("We couldn't find anything related to your request.");
+    	    menu();
+    	} else {
+    	// making an object for each post
+        	var postObj = {};
+        	resultObject.data.children.forEach(function(post) {
+            	postObj[post.data.title.substring(0, 25)+"..."] = {
+            	    Title: post.data.title,
+            	    by: post.data.author,
+            	    url: "https://www.reddit.com" + post.data.permalink,
+            	    votes: post.data.ups
+        	    };
+    	    });
+    	    callback(postObj);
+    	    menu();
+    	}
     });  
 }
 
@@ -194,18 +207,26 @@ function getSortedSubreddit(subreddit, sortingMethod, callback) {
     request(address, function(err, result) {
     	var resultObject = JSON.parse(result.body);
         
-        // making an object for each post
-    	var postObj = {};
-    	resultObject.data.children.forEach(function(post) {
-        	postObj[post.data.title.substring(0, 25)+"..."] = {
-        	    Title: post.data.title,
-        	    by: post.data.author,
-        	    url: "https://www.reddit.com" + post.data.permalink,
-        	    votes: post.data.ups
-    	    };
-    	});
-    	callback(postObj);
-    	menu();
+        if (resultObject.error) {
+    	    console.log("We couldn't find anything related to your request.");
+    	    menu();
+    	} else if (resultObject.data.children === 0) {
+    	    console.log("We couldn't find anything related to your request.");
+    	    menu();
+    	} else {
+            // making an object for each post
+        	var postObj = {};
+        	resultObject.data.children.forEach(function(post) {
+            	postObj[post.data.title.substring(0, 25)+"..."] = {
+            	    Title: post.data.title,
+            	    by: post.data.author,
+            	    url: "https://www.reddit.com" + post.data.permalink,
+            	    votes: post.data.ups
+        	    };
+        	});
+        	callback(postObj);
+        	menu();
+        }
     });
 }
 
