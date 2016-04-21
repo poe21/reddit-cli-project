@@ -1,6 +1,8 @@
 var colors = require('colors');
 var request = require('request');
 var inquirer = require('inquirer');
+const imageToAscii = require("image-to-ascii");
+//    stringify = require("./node_modules/image-to-ascii/node_modules/asciify-pixel-matrix");
 
 // MENU CHOICES
 var menuChoices = [
@@ -93,12 +95,18 @@ function getPostsList(address) {
           return;
         }
         else {
+          console.log("\033c"); // clears console
           // calls the function to display the posts of the chosen subreddit
-          getPosts(choice.postlist, function(posts) {
-            console.log("\033c"); // clears console
-            console.log("Posts: ");
-            console.log(posts);
-            postsList();
+          getPosts(choice.postlist, function(post) {
+            
+            console.log("Post: ");
+            console.log(post);
+          }, function(img) {
+            if (img.length > 1) {
+              imageToAscii(img, function (err, result) {
+                console.log(result);
+              });
+            }
           });
         }
       });
@@ -106,11 +114,13 @@ function getPostsList(address) {
   });
 }
 
-function getPosts(address, callback) {
+function getPosts(address, callback, callbackImg) {
   request(address+".json", function(err, result) {
     var resultObject = JSON.parse(result.body);
     
     // making an object for each post
+    var img = resultObject[0].data.children[0].data.thumbnail;
+    console.log(resultObject[0].data.children[0].data.thumbnail);
     var postObj = {
       Title: resultObject[0].data.children[0].data.title,
       by: resultObject[0].data.children[0].data.author,
@@ -118,6 +128,7 @@ function getPosts(address, callback) {
       votes: resultObject[0].data.children[0].data.ups
     };
     callback(postObj);
+    callbackImg(img);
   });
 }
 
