@@ -34,7 +34,7 @@ function menu() {
             } else if (choice.menu === "SORTEDSUBREDDIT") {
                 whichSortedSubreddit();
             } else if (choice.menu === "LISTSUBREDDITS") {
-                
+                getSubredditsList();
             } else if (choice.menu === "QUIT") {
                 return;
             }
@@ -194,11 +194,11 @@ function whichSortedSubreddit() {
                         menu();
                     } else if (choice.sorted === "QUIT") {
                         return;
-                    } else { 
+                    } else {
                         getSortedSubreddit(answer.whichsub, choice.sorted, function(posts) {
                             console.log("Posts: ");
                             console.log(posts);
-                            sortedSubredditMenu()
+                            sortedSubredditMenu();
                         });
                     }
                 }
@@ -241,11 +241,77 @@ function getSortedSubreddit(subreddit, sortingMethod, callback) {
     });
 }
 
+// makes a choice menu using the popular subreddits list from reddit.com/subreddits
+function getSubredditsList() {
+    var address = "https://www.reddit.com/subreddits.json";
+    request(address, function(err, result) {
+    	var resultObject = JSON.parse(result.body);
+    	var subredditChoices = [];
+    	
+        // making an object for each subreddit
+    	var subredditObj = {};
+    	resultObject.data.children.forEach(function(subreddit) {
+        	subredditObj = {
+        	    name: subreddit.data.title,
+        	    value: "https://www.reddit.com" + subreddit.data.url
+    	    };
+    	    // push each subreddit object into the subredditChoices menu array
+    	    subredditChoices.push(subredditObj);
+    	});
+    	
+    	// pushing more options to the menu
+    	subredditChoices.push(
+    	    new inquirer.Separator(),
+    	    {name: 'Go back to main menu', value: 'BACK'},
+    	    {name: 'Quit', value: 'QUIT'},
+    	    new inquirer.Separator()
+        );
+    	
+    	// calls the subreddit list
+    	subredditList();
+    	function subredditList() {
+            inquirer.prompt({
+              type: 'list',
+              name: 'sublist',
+              message: 'Which subreddit from the list would you like to view?',
+              choices: subredditChoices
+            }).then(function(choice) {
+                if (choice.sublist === "BACK") {
+                    menu();
+                } else if (choice.sublist === "QUIT") {
+                    return;
+                } else {
+                    // calls the function to display the posts of the chosen subreddit
+                    getSubreddits(choice.sublist, function(posts) {
+                        console.log("Posts: ");
+                        console.log(posts);
+                        subredditList();
+                    });
+                }
+            });
+    	}
+    });
+}
+    
 /*
-This function should "return" all the popular subreddits
+This function "returns" posts from a chosen popular subreddit
 */
-function getSubreddits(callback) {
-  // Load reddit.com/subreddits.json and call back with an array of subreddits
+function getSubreddits(subreddit, callback) {
+    var address = subreddit+"/.json";
+    request(address, function(err, result) {
+        var resultObject = JSON.parse(result.body);
+        // making an object for each post
+        var postObj = {};
+        resultObject.data.children.forEach(function(post) {
+            postObj[post.data.title.substring(0, 25)+"..."] = {
+                Title: post.data.title,
+                by: post.data.author,
+                url: "https://www.reddit.com" + post.data.permalink,
+                votes: post.data.ups
+            };
+        });
+        callback(postObj);
+    });
 }
 
 // Export the API
