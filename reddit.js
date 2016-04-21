@@ -9,6 +9,7 @@ var menuChoices = [
     {name: 'Show subreddit', value: 'SUBREDDIT'},
     {name: 'Show sorted subreddit', value: 'SORTEDSUBREDDIT'},
     {name: 'List subreddits', value: 'LISTSUBREDDITS'},
+    new inquirer.Separator(),
     {name: 'Quit', value: 'QUIT'}
 ];
 
@@ -24,6 +25,7 @@ function menu() {
                 getHomepage(function(posts) {
                     console.log("Posts: ");
                     console.log(posts);
+                    menu();
                 });
             } else if (choice.menu === "SORTEDHOMEPAGE") {
                 sortedMenu();
@@ -62,7 +64,6 @@ function getHomepage(callback) {
     	    };
     	});
     	callback(postObj);
-    	menu();
     });
   // Load reddit.com/.json and call back with the array of posts
 }
@@ -77,6 +78,8 @@ var sortedMenuChoices = [
     {name: 'Show Rising', value: 'RISING'},
     {name: 'Show Controversial', value: 'CONTROVERSIAL'},
     {name: 'Show Top', value: 'TOP'},
+    new inquirer.Separator(),
+    {name: 'Go back to main menu', value: 'BACK'},
     {name: 'Quit', value: 'QUIT'}
 ];
 
@@ -88,13 +91,16 @@ function sortedMenu() {
       choices: sortedMenuChoices
     }).then(
         function(choice) {
-            if (choice.sorted === "QUIT") {
+            if (choice.sorted === "BACK") {
+                menu();
+            } else if (choice.sorted === "QUIT") {
                 return;
+            } else { getSortedHomepage(choice.sorted, function(posts) {
+                    console.log("Posts: ");
+                    console.log(posts);
+                    sortedMenu();
+                });
             }
-            getSortedHomepage(choice.sorted, function(posts) {
-                console.log("Posts: ");
-                console.log(posts);
-            });
         }
     );
 }
@@ -117,7 +123,6 @@ function getSortedHomepage(sortingMethod, callback) {
     	    };
     	});
     	callback(postObj);
-    	menu();
     });  
 }
 
@@ -132,6 +137,7 @@ function whichSubreddit() {
         getSubreddit(answer.whichsub, function(posts) {
             console.log("Posts: ");
             console.log(posts);
+            menu();
         });
     });
 }
@@ -164,7 +170,6 @@ function getSubreddit(subreddit, callback) {
         	    };
     	    });
     	    callback(postObj);
-    	    menu();
     	}
     });  
 }
@@ -185,10 +190,17 @@ function whichSortedSubreddit() {
               choices: sortedMenuChoices
             }).then(
                 function(choice) {
-                    getSortedSubreddit(answer.whichsub, choice.sorted, function(posts) {
-                        console.log("Posts: ");
-                        console.log(posts);
-                    });
+                    if (choice.sorted === "BACK") {
+                        menu();
+                    } else if (choice.sorted === "QUIT") {
+                        return;
+                    } else { 
+                        getSortedSubreddit(answer.whichsub, choice.sorted, function(posts) {
+                            console.log("Posts: ");
+                            console.log(posts);
+                            sortedSubredditMenu()
+                        });
+                    }
                 }
             );
         }
@@ -209,10 +221,10 @@ function getSortedSubreddit(subreddit, sortingMethod, callback) {
         
         if (resultObject.error) {
     	    console.log("We couldn't find anything related to your request.");
-    	    menu();
+    	    whichSortedSubreddit();
     	} else if (resultObject.data.children === 0) {
     	    console.log("We couldn't find anything related to your request.");
-    	    menu();
+    	    whichSortedSubreddit();
     	} else {
             // making an object for each post
         	var postObj = {};
@@ -225,7 +237,6 @@ function getSortedSubreddit(subreddit, sortingMethod, callback) {
         	    };
         	});
         	callback(postObj);
-        	menu();
         }
     });
 }
