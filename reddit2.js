@@ -78,38 +78,6 @@ function whichSubreddit(callback) {
   });
 }
 
-// /*
-// This function should "return" the posts on the front page of a subreddit as an array of objects.
-// */
-// function getSubreddit(subreddit, callback) {
-//   // Load reddit.com/r/{subreddit}.json and call back with the array of posts
-//   var urlFriendlySubreddit = subreddit.toLowerCase().split(" ").join("");
-//   var address = "https://www.reddit.com/r/" + urlFriendlySubreddit + ".json";
-//   request(address, function(err, result) {
-//     var resultObject = JSON.parse(result.body);
-
-//     // if search invalid, returns to choose subreddit, else put result in a callback
-//     if (resultObject.error) {
-//       console.log("We couldn't find anything related to your request.");
-//       printSubredditPost();
-//     } else if (resultObject.data.children === 0) {
-//       console.log("We couldn't find anything related to your request.");
-//       printSubredditPost();
-//     } else {
-//       callback(resultObject.data.children);
-//     }
-//   });
-// }
-
-/*
-This function should "return" the posts on the front page of a subreddit as an array of objects.
-In contrast to the `getSubreddit` function, this one accepts a `sortingMethod` parameter.
-*/
-function getSortedSubreddit(subreddit, sortingMethod, callback) {
-  // Load reddit.com/r/{subreddit}/{sortingMethod}.json and call back with the array of posts
-  // Check if the sorting method is valid based on the various Reddit sorting methods
-}
-
 /*
 This function should "return" all the popular subreddits
 */
