@@ -83,6 +83,44 @@ This function should "return" all the popular subreddits
 */
 function getSubreddits(callback) {
   // Load reddit.com/subreddits.json and call back with an array of subreddits
+  var address = "https://www.reddit.com/subreddits.json";
+  var subredditChoices = [];
+  var subredditObj = {};
+  
+  request(address, function(err, result) {
+    var resultObject = JSON.parse(result.body);
+    // making an object for each subreddit
+    resultObject.data.children.forEach(function(subreddit) {
+      subredditObj = {
+        name: subreddit.data.title,
+        value: "https://www.reddit.com" + subreddit.data.url
+      };
+      // push each subreddit object into the subredditChoices menu array
+      subredditChoices.push(subredditObj);
+    });
+    
+    // pushing more options to the menu
+    subredditChoices.push(
+      new inquirer.Separator(), {
+        name: 'Go back to main menu',
+        value: 'BACK'
+      }, {
+        name: 'Quit',
+        value: 'QUIT'
+      },
+      new inquirer.Separator()
+    );
+
+  callback(subredditChoices); // output array of posts
+  });
+}
+
+function getPage(url, callback) {
+  var address = url + ".json";
+  request(address, function(err, result) {
+    var resultObject = JSON.parse(result.body);
+    callback(resultObject.data.children);
+  });
 }
 
 // Export the API
@@ -91,5 +129,7 @@ module.exports = {
   getSortedHomepage: getSortedHomepage,
   listPosts: listPosts,
   printPost: printPost,
-  whichSubreddit: whichSubreddit
+  whichSubreddit: whichSubreddit,
+  getSubreddits: getSubreddits,
+  getPage: getPage
 };

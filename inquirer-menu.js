@@ -28,7 +28,7 @@ var sortedMenuChoices = [
 ];
 
 function getUserChoice(callback) {
-// GIVES A CHOICE TO THE USER 
+// GIVES THE MAIN MENU CHOICE TO THE USER 
   inquirer.prompt({
     type: "list",
     name: "menu",
@@ -55,26 +55,14 @@ function showMainMenu() {
         printSubredditPost();
       } else if (choice === "SORTEDSUBREDDIT") {
         printSortedSubreddit();
-      // } else if (choice === "LISTSUBREDDITS") {
-      //   printListOfSubreddits();
+      } else if (choice === "LISTSUBREDDITS") {
+        printListOfSubreddits();
       } else if (choice === "QUIT") {
         return;
       }
     }
   );
 }
-
-// function printHomepage () {
-//   reddit.getHomepage(function(posts) {
-//     posts.forEach(function(post) {
-//       console.log(("Title: " + post.data.title).blue.bold);
-//       console.log("By: " + post.data.author);
-//       console.log("url: https://www.reddit.com" + post.data.permalink);
-//       console.log("vote ups: " + post.data.ups);
-//     });
-//     showMainMenu();
-//   });
-// }
 
 function printHomepagePost() {
   reddit.getHomepage(function(data1) {
@@ -88,6 +76,7 @@ function printHomepagePost() {
           console.log("By: " + post.author);
           console.log("url: " + post.url);
           console.log("vote ups: " + post.votes);
+          showMainMenu();
         });
       });
     });
@@ -107,6 +96,7 @@ function printSortedHomepagePost() {
             console.log("By: " + post.author);
             console.log("url: " + post.url);
             console.log("vote ups: " + post.votes);
+            printSortedHomepagePost();
           });
         });
       });
@@ -148,6 +138,7 @@ function printSubredditPost(){
             console.log("By: " + post.author);
             console.log("url: " + post.url);
             console.log("vote ups: " + post.votes);
+            showMainMenu();
           });
         });
       });
@@ -169,6 +160,7 @@ function printSortedSubreddit() {
               console.log("By: " + post.author);
               console.log("url: " + post.url);
               console.log("vote ups: " + post.votes);
+              showMainMenu();
             });
           });
         });
@@ -225,12 +217,34 @@ function getSortedSubreddit(subreddit, sortingMethod, callback) {
   });
 }
 
+function printListOfSubreddits() {
+  reddit.getSubreddits(function(data1) {
+    choosePost(data1, function(data2) {
+      reddit.getPage(data2, function(data3) {
+        reddit.listPosts(data3, function(data4) {
+          choosePost(data4, function(data5) {
+            reddit.printPost(data5, function(post) {
+              console.log("\033c"); // clears console
+              
+              console.log("POST: ");
+              console.log(("Title: " + post.title).blue.bold);
+              console.log("By: " + post.author);
+              console.log("url: " + post.url);
+              console.log("vote ups: " + post.votes);
+              showMainMenu();
+            });
+          });
+        });
+      });
+    });
+  });
+}
 
 function choosePost(arr, callback) {
 inquirer.prompt({
     type: 'list',
     name: 'postChooser',
-    message: 'Which post from the list would you like to see?',
+    message: 'What would you like to see?',
     choices: arr
   }).then(function(choice) {
       if (choice.postChooser === "BACK") {
