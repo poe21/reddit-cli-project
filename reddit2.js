@@ -60,6 +60,11 @@ In contrast to the `getHomepage` function, this one accepts a `sortingMethod` pa
 function getSortedHomepage(sortingMethod, callback) {
   // Load reddit.com/{sortingMethod}.json and call back with the array of posts
   // Check if the sorting method is valid based on the various Reddit sorting methods
+  var address = "https://www.reddit.com/" + sortingMethod + "/.json";
+  request(address, function(err, result) {
+    var resultObject = JSON.parse(result.body);
+    callback(resultObject.data.children);
+  });
 }
 
 function whichSubreddit(callback) {
@@ -115,6 +120,7 @@ function getSubreddits(callback) {
 // Export the API
 module.exports = {
   getHomepage: getHomepage,
+  getSortedHomepage: getSortedHomepage,
   listPosts: listPosts,
   printPost: printPost,
   whichSubreddit: whichSubreddit

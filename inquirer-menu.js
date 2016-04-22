@@ -15,6 +15,18 @@ var mainMenuChoices = [
   {name: "Quit", value: "QUIT"}
 ];
 
+// SORTED MENU CHOICES
+var sortedMenuChoices = [
+    {name: 'Show Hot', value: 'hot'},
+    {name: 'Show New', value: 'new'},
+    {name: 'Show Rising', value: 'rising'},
+    {name: 'Show Controversial', value: 'controversial'},
+    {name: 'Show Top', value: 'top'},
+    new inquirer.Separator(),
+    {name: 'Go back to main menu', value: 'BACK'},
+    {name: 'Quit', value: 'QUIT'}
+];
+
 function getUserChoice(callback) {
 // GIVES A CHOICE TO THE USER 
   inquirer.prompt({
@@ -37,8 +49,8 @@ function showMainMenu() {
     function(choice) {
       if (choice === "HOMEPAGE") {
         printHomepagePost();
-      // } else if (choice === "SORTEDHOMEPAGE") {
-      //   printSortedHomepage();
+      } else if (choice === "SORTEDHOMEPAGE") {
+        printSortedHomepagePost();
       } else if (choice === "SUBREDDIT") {
         printSubredditPost();
       // } else if (choice === "SORTEDSUBREDDIT") {
@@ -80,6 +92,47 @@ function printHomepagePost() {
       });
     });
   });
+}
+
+function printSortedHomepagePost() {
+  sortedMenu(function(data1) {
+    reddit.getSortedHomepage(data1, function(data2) {
+      reddit.listPosts(data2, function(data3) {
+        choosePost(data3, function(data4) {
+          reddit.printPost(data4, function(post) {
+            console.log("\033c"); // clears console
+            
+            console.log("POST: ");
+            console.log(("Title: " + post.title).blue.bold);
+            console.log("By: " + post.author);
+            console.log("url: " + post.url);
+            console.log("vote ups: " + post.votes);
+          });
+        });
+      });
+    });
+  });
+}
+
+function sortedMenu(callback) {
+  inquirer.prompt({
+    type: 'list',
+    name: 'sorted',
+    message: 'How would you like the homepage to be sorted?',
+    choices: sortedMenuChoices
+  }).then(
+    function(choice) {
+      if (choice.sorted === "BACK") {
+        showMainMenu();
+      }
+      else if (choice.sorted === "QUIT") {
+        return;
+      }
+      else {
+        callback(choice.sorted);
+      }
+    }
+  );
 }
 
 function printSubredditPost(){
