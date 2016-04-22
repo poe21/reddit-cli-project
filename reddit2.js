@@ -1,3 +1,4 @@
+// linked modules
 var request = require('request');
 var inquirer = require("inquirer");
 
@@ -61,12 +62,39 @@ function getSortedHomepage(sortingMethod, callback) {
   // Check if the sorting method is valid based on the various Reddit sorting methods
 }
 
-/*
-This function should "return" the posts on the front page of a subreddit as an array of objects.
-*/
-function getSubreddit(subreddit, callback) {
-  // Load reddit.com/r/{subreddit}.json and call back with the array of posts
+function whichSubreddit(callback) {
+  var question = [{
+    type: "input",
+    name: "whichsub",
+    message: "Which subreddit would you like to view?"
+  }];
+  inquirer.prompt(question).then(function(answer) {
+    callback(answer.whichsub);
+  });
 }
+
+// /*
+// This function should "return" the posts on the front page of a subreddit as an array of objects.
+// */
+// function getSubreddit(subreddit, callback) {
+//   // Load reddit.com/r/{subreddit}.json and call back with the array of posts
+//   var urlFriendlySubreddit = subreddit.toLowerCase().split(" ").join("");
+//   var address = "https://www.reddit.com/r/" + urlFriendlySubreddit + ".json";
+//   request(address, function(err, result) {
+//     var resultObject = JSON.parse(result.body);
+
+//     // if search invalid, returns to choose subreddit, else put result in a callback
+//     if (resultObject.error) {
+//       console.log("We couldn't find anything related to your request.");
+//       printSubredditPost();
+//     } else if (resultObject.data.children === 0) {
+//       console.log("We couldn't find anything related to your request.");
+//       printSubredditPost();
+//     } else {
+//       callback(resultObject.data.children);
+//     }
+//   });
+// }
 
 /*
 This function should "return" the posts on the front page of a subreddit as an array of objects.
@@ -88,5 +116,6 @@ function getSubreddits(callback) {
 module.exports = {
   getHomepage: getHomepage,
   listPosts: listPosts,
-  printPost: printPost
+  printPost: printPost,
+  whichSubreddit: whichSubreddit
 };
