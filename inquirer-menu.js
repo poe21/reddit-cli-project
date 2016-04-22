@@ -2,6 +2,7 @@
 var inquirer = require("inquirer");
 var colors = require("colors");
 var reddit = require("./reddit2");
+var request = require('request');
 
 // MAIN MENU CHOICES
 var mainMenuChoices = [
@@ -63,20 +64,37 @@ function showMainMenu() {
 //   });
 // }
 
-//////////////////   TESTS BELOW  ////////////////////////////////////
-
-function printHomepage() {
-  reddit.getHomepage(
-    reddit.listPosts(
-      reddit.choosePost(function(post) {
+function printHomepage(){
+  reddit.getHomepage(function(data1){
+    reddit.listPosts(data1, function(data2) {
+      choosePost(data2, function(data3) {
+        reddit.printPost(data3, function(post) {
           console.log("\033c"); // clears console
           
-          console.log("Post: ");
-          console.log(("Title: " + post.data.title).blue.bold);
-          console.log("By: " + post.data.author);
-          console.log("url: https://www.reddit.com" + post.data.permalink);
-          console.log("vote ups: " + post.data.ups);
-        })
-      )
-    );
+          console.log("POST: ");
+          console.log(("Title: " + post.title).blue.bold);
+          console.log("By: " + post.author);
+          console.log("url: " + post.url);
+          console.log("vote ups: " + post.votes);
+        });
+      });
+    });
+  });
+}
+
+function choosePost(arr, callback) {
+inquirer.prompt({
+    type: 'list',
+    name: 'postChooser',
+    message: 'Which post from the list would you like to see?',
+    choices: arr
+  }).then(function(choice) {
+      if (choice.postChooser === "BACK") {
+        showMainMenu();
+      } else if (choice.postChooser === "QUIT") {
+        return;
+      } else {
+        callback(choice.postChooser);
+      }
+    });
 }

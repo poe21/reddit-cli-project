@@ -9,51 +9,47 @@ function getHomepage(callback) {
   var address = "https://www.reddit.com/.json";
   request(address, function(err, result) {
     var resultObject = JSON.parse(result.body);
-    console.log(resultObject);
     callback(resultObject.data.children);
   });
 }
 
-//////////////////   TESTS BELOW  ////////////////////////////////////
-
-function listPosts(callback) {
+function listPosts(arr, callback) {
   var postChoices = []; // empty array that will store all the posts objects to make a menu
   var postObj = {}; // empty object to push to the posts list menu
   
-  callback.forEach(function(post) { // goes over each post in the result array
+  arr.forEach(function(post) { // goes over each post in the result array
     postObj = {
       name: post.data.title,
       value: "https://www.reddit.com" + post.data.permalink
     };
     // pushes each new post object into the choices menu array
     postChoices.push(postObj);
-    
-    // pushing more options to the menu
-    postChoices.push(
-      new inquirer.Separator(), 
-      {name: 'Go back to main menu', value: 'BACK'}, 
-      {name: 'Quit', value: 'QUIT'},
-      new inquirer.Separator()
-    );
   });
+  
+  // pushing more options to the menu
+  postChoices.push(
+    new inquirer.Separator(), 
+    {name: 'Go back to main menu', value: 'BACK'}, 
+    {name: 'Quit', value: 'QUIT'},
+    new inquirer.Separator()
+  );
   callback(postChoices); //exporting posts array
 }
 
-function choosePost(callback) {
-inquirer.prompt({
-    type: 'list',
-    name: 'postChooser',
-    message: 'Which post from the list would you like to see?',
-    choices: postChoices
-  }).then(function(choice) {
-      if (choice.postChooser === "BACK") {
-        mainMenuChoices();
-      } else if (choice.postChooser === "QUIT") {
-        return;
-      } else {
-        callback(choice.postChooser);
-      }
-    });
+function printPost(obj, callback) {
+  var address = obj+".json";
+  var postObj = {};
+  request(address, function(err, result) {
+    var resultObject = JSON.parse(result.body);
+    var post = resultObject[0].data.children[0].data;
+    postObj = {
+      title: post.title,
+      author: post.author,
+      url: "https://www.reddit.com" + post.permalink,
+      votes: post.ups
+    };
+    callback(postObj);
+  });
 }
 
 /*
@@ -92,5 +88,5 @@ function getSubreddits(callback) {
 module.exports = {
   getHomepage: getHomepage,
   listPosts: listPosts,
-  choosePost: choosePost
+  printPost: printPost
 };
