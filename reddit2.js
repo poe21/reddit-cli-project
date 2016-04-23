@@ -2,6 +2,7 @@
 var request = require('request');
 var inquirer = require("inquirer");
 var colors = require("colors");
+var imageToAscii = require("image-to-ascii");
 
 
 //////////////////////POSTS DISPLAY RELATED//////////////////////////
@@ -39,7 +40,8 @@ function makePostObj(obj, callback) {
       title: post.title,
       author: post.author,
       url: "https://www.reddit.com" + post.permalink,
-      votes: post.ups
+      votes: post.ups,
+      thumbnail: post.thumbnail
     };
     callback(postObj);
   });
@@ -53,9 +55,24 @@ function printPost(post, callback) {
   console.log("By: " + post.author);
   console.log("url: " + post.url);
   console.log("vote ups: " + post.votes);
+  if (post.thumbnail.length > 10) {
+    imageMaker(post.thumbnail);
+  }
 }
 
-////////////////FETCH DATA FROM URL.JSON//////////////////
+
+/////////////////////// IMAGES ////////////////////////////////
+
+function imageMaker(post) {
+  imageToAscii(post, {
+    colored: true
+  }, (err, converted) => {
+    console.log(err || converted);
+  });
+}
+
+
+///////////////////FETCH DATA FROM URL.JSON/////////////////////
 
 function getPage(url, callback) {
   var address = url + ".json";
