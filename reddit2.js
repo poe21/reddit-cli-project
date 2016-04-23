@@ -1,18 +1,10 @@
 // linked modules
 var request = require('request');
 var inquirer = require("inquirer");
+var colors = require("colors");
 
-/*
-This function should "return" the default homepage posts as an array of objects
-*/
-function getHomepage(callback) {
-// Load reddit.com/.json and call back with the array of posts
-  var address = "https://www.reddit.com/.json";
-  request(address, function(err, result) {
-    var resultObject = JSON.parse(result.body);
-    callback(resultObject.data.children);
-  });
-}
+
+//////////////////////POSTS DISPLAY RELATED//////////////////////////
 
 function listPosts(arr, callback) {
   var postChoices = []; // empty array that will store all the posts objects to make a menu
@@ -37,7 +29,7 @@ function listPosts(arr, callback) {
   callback(postChoices); //exporting posts array
 }
 
-function printPost(obj, callback) {
+function makePostObj(obj, callback) {
   var address = obj+".json";
   var postObj = {};
   request(address, function(err, result) {
@@ -53,6 +45,26 @@ function printPost(obj, callback) {
   });
 }
 
+function printPost(post, callback) {
+  console.log("\033c"); // clears console
+
+  console.log("POST: ");
+  console.log(("Title: " + post.title).blue.bold);
+  console.log("By: " + post.author);
+  console.log("url: " + post.url);
+  console.log("vote ups: " + post.votes);
+}
+
+////////////////FETCH DATA FROM URL.JSON//////////////////
+
+function getPage(url, callback) {
+  var address = url + ".json";
+  request(address, function(err, result) {
+    var resultObject = JSON.parse(result.body);
+    callback(resultObject.data.children);
+  });
+}
+
 /*
 This function should "return" the default homepage posts as an array of objects.
 In contrast to the `getHomepage` function, this one accepts a `sortingMethod` parameter.
@@ -64,17 +76,6 @@ function getSortedHomepage(sortingMethod, callback) {
   request(address, function(err, result) {
     var resultObject = JSON.parse(result.body);
     callback(resultObject.data.children);
-  });
-}
-
-function whichSubreddit(callback) {
-  var question = [{
-    type: "input",
-    name: "whichsub",
-    message: "Which subreddit would you like to view?"
-  }];
-  inquirer.prompt(question).then(function(answer) {
-    callback(answer.whichsub);
   });
 }
 
@@ -115,21 +116,14 @@ function getSubreddits(callback) {
   });
 }
 
-function getPage(url, callback) {
-  var address = url + ".json";
-  request(address, function(err, result) {
-    var resultObject = JSON.parse(result.body);
-    callback(resultObject.data.children);
-  });
-}
 
-// Export the API
+////////////////////MODULES EXPORT//////////////////////////
+
 module.exports = {
-  getHomepage: getHomepage,
   getSortedHomepage: getSortedHomepage,
   listPosts: listPosts,
+  makePostObj: makePostObj,
   printPost: printPost,
-  whichSubreddit: whichSubreddit,
   getSubreddits: getSubreddits,
   getPage: getPage
 };

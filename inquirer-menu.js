@@ -1,8 +1,11 @@
-// linked modules
+////////////////////LINKED MODULES//////////////////////////
 var inquirer = require("inquirer");
 var colors = require("colors");
 var reddit = require("./reddit2");
 var request = require('request');
+
+
+////////////////////MENU CHOICES//////////////////////////
 
 // MAIN MENU CHOICES
 var mainMenuChoices = [
@@ -27,6 +30,12 @@ var sortedMenuChoices = [
     {name: 'Quit', value: 'QUIT'}
 ];
 
+
+/////////////// STARTS PROGRAM, FIRST MENU CALL//////////////
+showMainMenu();
+
+//////////////////////USER PROMPT///////////////////////////
+
 function getUserChoice(callback) {
 // GIVES THE MAIN MENU CHOICE TO THE USER 
   inquirer.prompt({
@@ -41,14 +50,11 @@ function getUserChoice(callback) {
   );
 }
 
-// STARTS PROGRAM, FIRST MENU CALL
-showMainMenu();
-
 function showMainMenu() {
   getUserChoice(
     function(choice) {
       if (choice === "HOMEPAGE") {
-        printHomepagePost();
+        printHomepagePost("https://www.reddit.com/");
       } else if (choice === "SORTEDHOMEPAGE") {
         printSortedHomepagePost();
       } else if (choice === "SUBREDDIT") {
@@ -62,46 +68,6 @@ function showMainMenu() {
       }
     }
   );
-}
-
-function printHomepagePost() {
-  reddit.getHomepage(function(data1) {
-    reddit.listPosts(data1, function(data2) {
-      choosePost(data2, function(data3) {
-        reddit.printPost(data3, function(post) {
-          console.log("\033c"); // clears console
-          
-          console.log("POST: ");
-          console.log(("Title: " + post.title).blue.bold);
-          console.log("By: " + post.author);
-          console.log("url: " + post.url);
-          console.log("vote ups: " + post.votes);
-          showMainMenu();
-        });
-      });
-    });
-  });
-}
-
-function printSortedHomepagePost() {
-  sortedMenu(function(data1) {
-    reddit.getSortedHomepage(data1, function(data2) {
-      reddit.listPosts(data2, function(data3) {
-        choosePost(data3, function(data4) {
-          reddit.printPost(data4, function(post) {
-            console.log("\033c"); // clears console
-            
-            console.log("POST: ");
-            console.log(("Title: " + post.title).blue.bold);
-            console.log("By: " + post.author);
-            console.log("url: " + post.url);
-            console.log("vote ups: " + post.votes);
-            printSortedHomepagePost();
-          });
-        });
-      });
-    });
-  });
 }
 
 function sortedMenu(callback) {
@@ -125,19 +91,42 @@ function sortedMenu(callback) {
   );
 }
 
-function printSubredditPost(){
-  reddit.whichSubreddit(function(data1) {
-    getSubreddit(data1, function(data2) {
-      reddit.listPosts(data2, function(data3) {
-        choosePost(data3, function(data4) {
-          reddit.printPost(data4, function(post) {
-            console.log("\033c"); // clears console
-            
-            console.log("POST: ");
-            console.log(("Title: " + post.title).blue.bold);
-            console.log("By: " + post.author);
-            console.log("url: " + post.url);
-            console.log("vote ups: " + post.votes);
+function choosePost(arr, callback) {
+inquirer.prompt({
+    type: 'list',
+    name: 'postChooser',
+    message: 'What would you like to see?',
+    choices: arr
+  }).then(function(choice) {
+      if (choice.postChooser === "BACK") {
+        showMainMenu();
+      } else if (choice.postChooser === "QUIT") {
+        return;
+      } else {
+        callback(choice.postChooser);
+      }
+    });
+}
+
+function whichSubreddit(callback) {
+  var question = [{
+    type: "input",
+    name: "whichsub",
+    message: "Which subreddit would you like to view?"
+  }];
+  inquirer.prompt(question).then(function(answer) {
+    callback(answer.whichsub);
+  });
+}
+
+////////////////////PRINT CHOSEN DATA//////////////////////////
+
+function printHomepagePost(url) {
+  reddit.getPage(url, function(data1) {
+    reddit.listPosts(data1, function(data2) {
+      choosePost(data2, function(data3) {
+        reddit.makePostObj(data3, function(post) {
+          reddit.printPost(post, function() {
             showMainMenu();
           });
         });
@@ -146,20 +135,29 @@ function printSubredditPost(){
   });
 }
 
-function printSortedSubreddit() {
-  reddit.whichSubreddit(function(data1) {
-    sortedMenu(function(data2) {
-      getSortedSubreddit(data1, data2, function(data3) {
-        reddit.listPosts(data3, function(data4) {
-          choosePost(data4, function(data5) {
-            reddit.printPost(data5, function(post) {
-              console.log("\033c"); // clears console
-              
-              console.log("POST: ");
-              console.log(("Title: " + post.title).blue.bold);
-              console.log("By: " + post.author);
-              console.log("url: " + post.url);
-              console.log("vote ups: " + post.votes);
+function printSortedHomepagePost() {
+  sortedMenu(function(data1) {
+    reddit.getSortedHomepage(data1, function(data2) {
+      reddit.listPosts(data2, function(data3) {
+        choosePost(data3, function(data4) {
+          reddit.makePostObj(data4, function(post) {
+            reddit.printPost(post, function() {
+              printSortedHomepagePost();
+            });
+          });
+        });
+      });
+    });
+  });
+}
+
+function printSubredditPost(){
+  whichSubreddit(function(data1) {
+    getSubreddit(data1, function(data2) {
+      reddit.listPosts(data2, function(data3) {
+        choosePost(data3, function(data4) {
+          reddit.makePostObj(data4, function(post) {
+            reddit.printPost(post, function() {
               showMainMenu();
             });
           });
@@ -168,6 +166,45 @@ function printSortedSubreddit() {
     });
   });
 }
+
+function printSortedSubreddit() {
+  whichSubreddit(function(data1) {
+    sortedMenu(function(data2) {
+      getSortedSubreddit(data1, data2, function(data3) {
+        reddit.listPosts(data3, function(data4) {
+          choosePost(data4, function(data5) {
+            reddit.makePostObj(data5, function(post) {
+              reddit.printPost(post, function() {
+                showMainMenu();
+              });
+            });
+          });
+        });
+      });
+    });
+  });
+}
+
+function printListOfSubreddits() {
+  reddit.getSubreddits(function(data1) {
+    choosePost(data1, function(data2) {
+      reddit.getPage(data2, function(data3) {
+        reddit.listPosts(data3, function(data4) {
+          choosePost(data4, function(data5) {
+            reddit.makePostObj(data5, function(post) {
+              reddit.printPost(post, function() {
+                showMainMenu();
+              });
+            });
+          });
+        });
+      });
+    });
+  });
+}
+
+
+///////////THESE FUNCTIONS FETCH DATA / RETURN TO OTHER FUNCTIONS ON THIS PAGE//////////////////////////
 
 /*
 This function should "return" the posts on the front page of a subreddit as an array of objects.
@@ -215,44 +252,4 @@ function getSortedSubreddit(subreddit, sortingMethod, callback) {
       callback(resultObject.data.children);
     }
   });
-}
-
-function printListOfSubreddits() {
-  reddit.getSubreddits(function(data1) {
-    choosePost(data1, function(data2) {
-      reddit.getPage(data2, function(data3) {
-        reddit.listPosts(data3, function(data4) {
-          choosePost(data4, function(data5) {
-            reddit.printPost(data5, function(post) {
-              console.log("\033c"); // clears console
-              
-              console.log("POST: ");
-              console.log(("Title: " + post.title).blue.bold);
-              console.log("By: " + post.author);
-              console.log("url: " + post.url);
-              console.log("vote ups: " + post.votes);
-              showMainMenu();
-            });
-          });
-        });
-      });
-    });
-  });
-}
-
-function choosePost(arr, callback) {
-inquirer.prompt({
-    type: 'list',
-    name: 'postChooser',
-    message: 'What would you like to see?',
-    choices: arr
-  }).then(function(choice) {
-      if (choice.postChooser === "BACK") {
-        showMainMenu();
-      } else if (choice.postChooser === "QUIT") {
-        return;
-      } else {
-        callback(choice.postChooser);
-      }
-    });
 }
