@@ -47,28 +47,68 @@ function makePostObj(obj, callback) {
   });
 }
 
-function printPost(post, callback) {
+function printPost(post, comments, callback) {
   console.log("\033c"); // clears console
 
-  console.log("POST: ");
+  console.log("POST: ".bold);
   console.log(("Title: " + post.title).blue.bold);
   console.log("By: " + post.author);
   console.log("url: " + post.url);
   console.log("vote ups: " + post.votes);
+  console.log("");
+  console.log("COMMENTS:".bold);
   if (post.thumbnail.length > 10) {
     imageMaker(post.thumbnail);
   }
+  displayComments(comments);
 }
-
 
 /////////////////////// IMAGES ////////////////////////////////
 
 function imageMaker(post) {
   imageToAscii(post, {
-    colored: true
+    colored: true,
+    size: {
+      width: "50%"
+    }
   }, (err, converted) => {
     console.log(err || converted);
   });
+}
+
+
+//////////////////////// COMMENTS ///////////////////////////////
+
+function makeCommentObj(obj, callback) {
+  var address = obj+".json";
+  var commentObj = {};
+  var commentsArray = [];
+  
+  request(address, function(err, result) {
+    var resultObject = JSON.parse(result.body);
+    var comments = resultObject[1].data.children;
+    comments.forEach(function(comment) {
+      commentObj = {
+        comment: comment.data.body,
+        author: comment.data.author
+      };
+    commentsArray.push(commentObj);
+    });
+  callback(commentsArray);
+  });
+}
+
+function displayComments(comments) {
+  if (comments.length === 0) {
+    console.log("There are no comments to display for this post.");
+  } else {
+    comments.forEach(function(com) {
+      if(com.comment){
+        console.log(com.comment.blue);
+        console.log(com.author);
+      }
+    });
+  }
 }
 
 
@@ -142,5 +182,6 @@ module.exports = {
   makePostObj: makePostObj,
   printPost: printPost,
   getSubreddits: getSubreddits,
-  getPage: getPage
+  getPage: getPage,
+  makeCommentObj: makeCommentObj
 };

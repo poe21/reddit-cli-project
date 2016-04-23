@@ -126,8 +126,10 @@ function printHomepagePost(url) {
     reddit.listPosts(data1, function(data2) {
       choosePost(data2, function(data3) {
         reddit.makePostObj(data3, function(post) {
-          reddit.printPost(post, function() {
-            showMainMenu();
+          reddit.makeCommentObj(data3, function(comments){
+            reddit.printPost(post, comments, function() {
+              showMainMenu();
+            });
           });
         });
       });
@@ -192,8 +194,10 @@ function printListOfSubreddits() {
         reddit.listPosts(data3, function(data4) {
           choosePost(data4, function(data5) {
             reddit.makePostObj(data5, function(post) {
-              reddit.printPost(post, function() {
-                showMainMenu();
+              reddit.makeCommentObj(data5, function(comments) {
+                reddit.printPost(post, comments, function() {
+                  showMainMenu();
+                });
               });
             });
           });
