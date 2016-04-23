@@ -127,9 +127,7 @@ function printHomepagePost(url) {
       choosePost(data2, function(data3) {
         reddit.makePostObj(data3, function(post) {
           reddit.makeCommentObj(data3, function(comments){
-            reddit.printPost(post, comments, function() {
-              showMainMenu();
-            });
+            printPost(post, comments);
           });
         });
       });
@@ -143,8 +141,8 @@ function printSortedHomepagePost() {
       reddit.listPosts(data2, function(data3) {
         choosePost(data3, function(data4) {
           reddit.makePostObj(data4, function(post) {
-            reddit.printPost(post, function() {
-              printSortedHomepagePost();
+            reddit.makeCommentObj(data4, function(comments){
+              printPost(post, comments);
             });
           });
         });
@@ -159,8 +157,8 @@ function printSubredditPost(){
       reddit.listPosts(data2, function(data3) {
         choosePost(data3, function(data4) {
           reddit.makePostObj(data4, function(post) {
-            reddit.printPost(post, function() {
-              showMainMenu();
+            reddit.makeCommentObj(data4, function(comments){
+              printPost(post, comments);
             });
           });
         });
@@ -176,8 +174,8 @@ function printSortedSubreddit() {
         reddit.listPosts(data3, function(data4) {
           choosePost(data4, function(data5) {
             reddit.makePostObj(data5, function(post) {
-              reddit.printPost(post, function() {
-                showMainMenu();
+              reddit.makeCommentObj(data5, function(comments){
+                printPost(post, comments);
               });
             });
           });
@@ -194,10 +192,8 @@ function printListOfSubreddits() {
         reddit.listPosts(data3, function(data4) {
           choosePost(data4, function(data5) {
             reddit.makePostObj(data5, function(post) {
-              reddit.makeCommentObj(data5, function(comments) {
-                reddit.printPost(post, comments, function() {
-                  showMainMenu();
-                });
+              reddit.makeCommentObj(data5, function(comments){
+                printPost(post, comments);
               });
             });
           });
@@ -205,6 +201,23 @@ function printListOfSubreddits() {
       });
     });
   });
+}
+
+function printPost(post, comments) {
+  console.log("\033c"); // clears console
+
+  console.log("POST: ".bold);
+  console.log(("Title: " + post.title).blue.bold);
+  console.log("By: " + post.author);
+  console.log("url: " + post.url);
+  console.log("vote ups: " + post.votes);
+  console.log("");
+  console.log("COMMENTS:".bold);
+  if (post.thumbnail.length > 10) {
+    reddit.imageMaker(post.thumbnail);
+  }
+  reddit.displayComments(comments);
+  showMainMenu();
 }
 
 

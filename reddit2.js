@@ -47,29 +47,17 @@ function makePostObj(obj, callback) {
   });
 }
 
-function printPost(post, comments, callback) {
-  console.log("\033c"); // clears console
-
-  console.log("POST: ".bold);
-  console.log(("Title: " + post.title).blue.bold);
-  console.log("By: " + post.author);
-  console.log("url: " + post.url);
-  console.log("vote ups: " + post.votes);
-  console.log("");
-  console.log("COMMENTS:".bold);
-  if (post.thumbnail.length > 10) {
-    imageMaker(post.thumbnail);
-  }
-  displayComments(comments);
-}
-
 /////////////////////// IMAGES ////////////////////////////////
 
 function imageMaker(post) {
   imageToAscii(post, {
     colored: true,
     size: {
-      width: "50%"
+      width: "25%",
+      height: "25%"
+    },
+    size_options: {
+      fit_screen: false
     }
   }, (err, converted) => {
     console.log(err || converted);
@@ -105,7 +93,7 @@ function displayComments(comments) {
     comments.forEach(function(com) {
       if(com.comment){
         console.log(com.comment.blue);
-        console.log(com.author);
+        console.log("- by: " + com.author);
       }
     });
   }
@@ -180,8 +168,9 @@ module.exports = {
   getSortedHomepage: getSortedHomepage,
   listPosts: listPosts,
   makePostObj: makePostObj,
-  printPost: printPost,
+  displayComments: displayComments,
   getSubreddits: getSubreddits,
   getPage: getPage,
-  makeCommentObj: makeCommentObj
+  makeCommentObj: makeCommentObj,
+  imageMaker: imageMaker
 };
