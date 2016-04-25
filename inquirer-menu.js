@@ -1,7 +1,7 @@
 ////////////////////LINKED MODULES//////////////////////////
 var inquirer = require("inquirer");
 var colors = require("colors");
-var reddit = require("./reddit2");
+var reddit = require("./reddit");
 var request = require('request');
 
 
@@ -212,12 +212,15 @@ function printPost(post, comments) {
   console.log("url: " + post.url);
   console.log("vote ups: " + post.votes);
   console.log("");
-  console.log("COMMENTS:".bold);
+  
   if (post.thumbnail.length > 10) {
-    reddit.imageMaker(post.thumbnail);
+    reddit.imageMaker(post.thumbnail, function() {
+      console.log("COMMENTS:".bold);
+      reddit.displayComments(comments);
+      showMainMenu();
+    });
   }
-  reddit.displayComments(comments);
-  showMainMenu();
+  
 }
 
 

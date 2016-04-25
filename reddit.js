@@ -49,7 +49,7 @@ function makePostObj(obj, callback) {
 
 /////////////////////// IMAGES ////////////////////////////////
 
-function imageMaker(post) {
+function imageMaker(post, callback) {
   imageToAscii(post, {
     colored: true,
     size: {
@@ -59,8 +59,9 @@ function imageMaker(post) {
     size_options: {
       fit_screen: false
     }
-  }, (err, converted) => {
+  }, function(err, converted) {
     console.log(err || converted);
+    callback();
   });
 }
 
