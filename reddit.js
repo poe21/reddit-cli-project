@@ -1,352 +1,141 @@
-var colors = require('colors');
+// linked modules
 var request = require('request');
-var inquirer = require('inquirer');
-const imageToAscii = require("image-to-ascii");
-//    stringify = require("./node_modules/image-to-ascii/node_modules/asciify-pixel-matrix");
+var inquirer = require("inquirer");
+var colors = require("colors");
+var imageToAscii = require("image-to-ascii");
 
-// MENU CHOICES
-var menuChoices = [
-    {name: 'Show homepage posts', value: 'HOMEPAGE'},
-    {name: 'Show sorted homepage posts', value: 'SORTEDHOMEPAGE'},
-    {name: 'Show subreddit', value: 'SUBREDDIT'},
-    {name: 'Show sorted subreddit', value: 'SORTEDSUBREDDIT'},
-    {name: 'List subreddits', value: 'LISTSUBREDDITS'},
-    new inquirer.Separator(),
-    {name: 'Quit', value: 'QUIT'}
-];
 
-// MAIN MENU 
-function menu() {
-  inquirer.prompt({
-    type: 'list',
-    name: 'menu',
-    message: 'What do you want to do?',
-    choices: menuChoices
-  }).then(
-    function(choice) {
-      if (choice.menu === "HOMEPAGE") {
-        getPostsList("https://www.reddit.com");
-      }
-      else if (choice.menu === "SORTEDHOMEPAGE") {
-        sortedMenu();
-      }
-      else if (choice.menu === "SUBREDDIT") {
-        whichSubreddit();
-      }
-      else if (choice.menu === "SORTEDSUBREDDIT") {
-        whichSortedSubreddit();
-      }
-      else if (choice.menu === "LISTSUBREDDITS") {
-        getSubredditsList();
-      }
-      else if (choice.menu === "QUIT") {
-        return;
-      }
-    }
-  );
-}
+//////////////////////POSTS DISPLAY RELATED//////////////////////////
 
-// Main menu first call, starts program
-menu();
-
-// makes a choice menu using the listed posts
-function getPostsList(address) {
-  request(address+"/.json", function(err, result) {
-    var resultObject = JSON.parse(result.body);
-    var postChoices = [];
-
-    // making an object for each post
-    var postObj = {};
-    resultObject.data.children.forEach(function(post) {
-      postObj = {
-        name: post.data.title,
-        value: "https://www.reddit.com" + post.data.permalink
-      };
-      // push each object into the choices menu array
-      postChoices.push(postObj);
-    });
-
-    // pushing more options to the menu
-    postChoices.push(
-      new inquirer.Separator(), {
-        name: 'Go back to main menu',
-        value: 'BACK'
-      }, {
-        name: 'Quit',
-        value: 'QUIT'
-      },
-      new inquirer.Separator()
-    );
-
-    // calls the list of posts from the chosen page
-    postsList();
-
-    function postsList() {
-      inquirer.prompt({
-        type: 'list',
-        name: 'postlist',
-        message: 'Which post from the list would you like to view?',
-        choices: postChoices
-      }).then(function(choice) {
-        if (choice.postlist === "BACK") {
-          menu();
-        }
-        else if (choice.postlist === "QUIT") {
-          return;
-        }
-        else {
-          console.log("\033c"); // clears console
-          // calls the function to display the posts of the chosen subreddit
-          getPosts(choice.postlist, function(post) {
-            
-            console.log("Post: ");
-            console.log(post);
-          }, function(img) {
-            if (img.length > 1) {
-              imageToAscii(img, function (err, result) {
-                console.log(result);
-              });
-            }
-          });
-        }
-      });
-    }
-  });
-}
-
-function getPosts(address, callback, callbackImg) {
-  request(address+".json", function(err, result) {
-    var resultObject = JSON.parse(result.body);
-    
-    // making an object for each post
-    var img = resultObject[0].data.children[0].data.thumbnail;
-    console.log(resultObject[0].data.children[0].data.thumbnail);
-    var postObj = {
-      Title: resultObject[0].data.children[0].data.title,
-      by: resultObject[0].data.children[0].data.author,
-      url: "https://www.reddit.com" + resultObject[0].data.children[0].data.permalink,
-      votes: resultObject[0].data.children[0].data.ups
+function listPosts(arr, callback) {
+  var postChoices = []; // empty array that will store all the posts objects to make a menu
+  var postObj = {}; // empty object to push to the posts list menu
+  
+  arr.forEach(function(post) { // goes over each post in the result array
+    postObj = {
+      name: post.data.title,
+      value: "https://www.reddit.com" + post.data.permalink
     };
-    callback(postObj);
-    callbackImg(img);
+    // pushes each new post object into the choices menu array
+    postChoices.push(postObj);
   });
+  
+  // pushing more options to the menu
+  postChoices.push(
+    new inquirer.Separator(), 
+    {name: 'Go back to main menu', value: 'BACK'}, 
+    {name: 'Quit', value: 'QUIT'},
+    new inquirer.Separator()
+  );
+  callback(postChoices); //exporting posts array
 }
 
-/*
-This function should "return" the default homepage posts as an array of objects
-*/
-function getHomepage(callback) {
-  var address = "https://www.reddit.com/.json";
+function makePostObj(obj, callback) {
+  var address = obj+".json";
+  var postObj = {};
   request(address, function(err, result) {
     var resultObject = JSON.parse(result.body);
-    console.log(resultObject);
-    // making an object for each post
-    var postObj = {};
-    resultObject.data.children.forEach(function(post) {
-      postObj[post.data.title.substring(0, 25) + "..."] = {
-        Title: post.data.title,
-        by: post.data.author,
-        url: "https://www.reddit.com" + post.data.permalink,
-        votes: post.data.ups
-      };
-    });
+    var post = resultObject[0].data.children[0].data;
+    postObj = {
+      title: post.title,
+      author: post.author,
+      url: "https://www.reddit.com" + post.permalink,
+      votes: post.ups,
+      thumbnail: post.thumbnail
+    };
     callback(postObj);
   });
-  // Load reddit.com/.json and call back with the array of posts
+}
+
+/////////////////////// IMAGES ////////////////////////////////
+
+function imageMaker(post) {
+  imageToAscii(post, {
+    colored: true,
+    size: {
+      width: "25%",
+      height: "25%"
+    },
+    size_options: {
+      fit_screen: false
+    }
+  }, (err, converted) => {
+    console.log(err || converted);
+  });
+}
+
+
+//////////////////////// COMMENTS ///////////////////////////////
+
+function makeCommentObj(obj, callback) {
+  var address = obj+".json";
+  var commentObj = {};
+  var commentsArray = [];
+  
+  request(address, function(err, result) {
+    var resultObject = JSON.parse(result.body);
+    var comments = resultObject[1].data.children;
+    comments.forEach(function(comment) {
+      commentObj = {
+        comment: comment.data.body,
+        author: comment.data.author
+      };
+    commentsArray.push(commentObj);
+    });
+  callback(commentsArray);
+  });
+}
+
+function displayComments(comments) {
+  if (comments.length === 0) {
+    console.log("There are no comments to display for this post.");
+  } else {
+    comments.forEach(function(com) {
+      if(com.comment){
+        console.log(com.comment.blue);
+        console.log("- by: " + com.author);
+      }
+    });
+  }
+}
+
+
+///////////////////FETCH DATA FROM URL.JSON/////////////////////
+
+function getPage(url, callback) {
+  var address = url + ".json";
+  request(address, function(err, result) {
+    var resultObject = JSON.parse(result.body);
+    callback(resultObject.data.children);
+  });
 }
 
 /*
 This function should "return" the default homepage posts as an array of objects.
 In contrast to the `getHomepage` function, this one accepts a `sortingMethod` parameter.
 */
-var sortedMenuChoices = [
-    {name: 'Show Hot', value: 'HOT'},
-    {name: 'Show New', value: 'NEW'},
-    {name: 'Show Rising', value: 'RISING'},
-    {name: 'Show Controversial', value: 'CONTROVERSIAL'},
-    {name: 'Show Top', value: 'TOP'},
-    new inquirer.Separator(),
-    {name: 'Go back to main menu', value: 'BACK'},
-    {name: 'Quit', value: 'QUIT'}
-];
-
-function sortedMenu() {
-  inquirer.prompt({
-    type: 'list',
-    name: 'sorted',
-    message: 'How would you like the homepage to be sorted?',
-    choices: sortedMenuChoices
-  }).then(
-    function(choice) {
-      if (choice.sorted === "BACK") {
-        menu();
-      }
-      else if (choice.sorted === "QUIT") {
-        return;
-      }
-      else {
-        getSortedHomepage(choice.sorted, function(posts) {
-          console.log("Posts: ");
-          console.log(posts);
-          sortedMenu();
-        });
-      }
-    }
-  );
-}
-
 function getSortedHomepage(sortingMethod, callback) {
   // Load reddit.com/{sortingMethod}.json and call back with the array of posts
   // Check if the sorting method is valid based on the various Reddit sorting methods
-  var address = "https://www.reddit.com/" + sortingMethod.toLowerCase() + ".json";
+  var address = "https://www.reddit.com/" + sortingMethod + "/.json";
   request(address, function(err, result) {
     var resultObject = JSON.parse(result.body);
-
-    // making an object for each post
-    var postObj = {};
-    resultObject.data.children.forEach(function(post) {
-      postObj[post.data.title.substring(0, 25) + "..."] = {
-        Title: post.data.title,
-        by: post.data.author,
-        url: "https://www.reddit.com" + post.data.permalink,
-        votes: post.data.ups
-      };
-    });
-    callback(postObj);
-  });
-}
-
-// User prompt asking which subreddit the user wants to view
-function whichSubreddit() {
-  var question = [{
-    type: "input",
-    name: "whichsub",
-    message: "Which subreddit would you like to view?"
-  }];
-  inquirer.prompt(question).then(function(answer) {
-    getSubreddit(answer.whichsub, function(posts) {
-      console.log("Posts: ");
-      console.log(posts);
-      menu();
-    });
+    callback(resultObject.data.children);
   });
 }
 
 /*
-This function should "return" the posts on the front page of a subreddit as an array of objects.
+This function should "return" all the popular subreddits
 */
-function getSubreddit(subreddit, callback) {
-  // Load reddit.com/r/{subreddit}.json and call back with the array of posts
-  var urlFriendlySubreddit = subreddit.toLowerCase().split(" ").join("");
-  var address = "https://www.reddit.com/r/" + urlFriendlySubreddit + ".json";
-  request(address, function(err, result) {
-    var resultObject = JSON.parse(result.body);
-
-    if (resultObject.error) {
-      console.log("We couldn't find anything related to your request.");
-      menu();
-    }
-    else if (resultObject.data.children === 0) {
-      console.log("We couldn't find anything related to your request.");
-      menu();
-    }
-    else {
-      // making an object for each post
-      var postObj = {};
-      resultObject.data.children.forEach(function(post) {
-        postObj[post.data.title.substring(0, 25) + "..."] = {
-          Title: post.data.title,
-          by: post.data.author,
-          url: "https://www.reddit.com" + post.data.permalink,
-          votes: post.data.ups
-        };
-      });
-      callback(postObj);
-    }
-  });
-}
-
-function whichSortedSubreddit() {
-  var question = [{
-    type: "input",
-    name: "whichsub",
-    message: "Which subreddit would you like to view?"
-  }];
-  inquirer.prompt(question).then(function(answer) {
-    sortedSubredditMenu();
-
-    function sortedSubredditMenu() {
-      inquirer.prompt({
-        type: 'list',
-        name: 'sorted',
-        message: 'How would you like the homepage to be sorted?',
-        choices: sortedMenuChoices
-      }).then(
-        function(choice) {
-          if (choice.sorted === "BACK") {
-            menu();
-          }
-          else if (choice.sorted === "QUIT") {
-            return;
-          }
-          else {
-            getSortedSubreddit(answer.whichsub, choice.sorted, function(posts) {
-              console.log("Posts: ");
-              console.log(posts);
-              sortedSubredditMenu();
-            });
-          }
-        }
-      );
-    }
-  });
-}
-
-/*
-This function should "return" the posts on the front page of a subreddit as an array of objects.
-In contrast to the `getSubreddit` function, this one accepts a `sortingMethod` parameter.
-*/
-function getSortedSubreddit(subreddit, sortingMethod, callback) {
-  // Load reddit.com/r/{subreddit}/{sortingMethod}.json and call back with the array of posts
-  // Check if the sorting method is valid based on the various Reddit sorting methods
-  var urlFriendlySubreddit = subreddit.toLowerCase().split(" ").join("");
-  var address = "https://www.reddit.com/r/" + urlFriendlySubreddit + "/" + sortingMethod.toLowerCase() + "/.json";
-  request(address, function(err, result) {
-    var resultObject = JSON.parse(result.body);
-
-    if (resultObject.error) {
-      console.log("We couldn't find anything related to your request.");
-      whichSortedSubreddit();
-    }
-    else if (resultObject.data.children === 0) {
-      console.log("We couldn't find anything related to your request.");
-      whichSortedSubreddit();
-    }
-    else {
-      // making an object for each post
-      var postObj = {};
-      resultObject.data.children.forEach(function(post) {
-        postObj[post.data.title.substring(0, 25) + "..."] = {
-          Title: post.data.title,
-          by: post.data.author,
-          url: "https://www.reddit.com" + post.data.permalink,
-          votes: post.data.ups
-        };
-      });
-      callback(postObj);
-    }
-  });
-}
-
-// makes a choice menu using the popular subreddits list from reddit.com/subreddits
-function getSubredditsList() {
+function getSubreddits(callback) {
+  // Load reddit.com/subreddits.json and call back with an array of subreddits
   var address = "https://www.reddit.com/subreddits.json";
+  var subredditChoices = [];
+  var subredditObj = {};
+  
   request(address, function(err, result) {
     var resultObject = JSON.parse(result.body);
-    var subredditChoices = [];
-
     // making an object for each subreddit
-    var subredditObj = {};
     resultObject.data.children.forEach(function(subreddit) {
       subredditObj = {
         name: subreddit.data.title,
@@ -355,7 +144,7 @@ function getSubredditsList() {
       // push each subreddit object into the subredditChoices menu array
       subredditChoices.push(subredditObj);
     });
-
+    
     // pushing more options to the menu
     subredditChoices.push(
       new inquirer.Separator(), {
@@ -368,57 +157,20 @@ function getSubredditsList() {
       new inquirer.Separator()
     );
 
-    // calls the subreddit list
-    subredditList();
-
-    function subredditList() {
-      inquirer.prompt({
-        type: 'list',
-        name: 'sublist',
-        message: 'Which subreddit from the list would you like to view?',
-        choices: subredditChoices
-      }).then(function(choice) {
-        if (choice.sublist === "BACK") {
-          menu();
-        }
-        else if (choice.sublist === "QUIT") {
-          return;
-        }
-        else {
-          // calls the function to display the posts of the chosen subreddit
-          getSubreddits(choice.sublist, function(posts) {
-            console.log("Posts: ");
-            console.log(posts);
-            subredditList();
-          });
-        }
-      });
-    }
+  callback(subredditChoices); // output array of posts
   });
 }
 
-/*
-This function "returns" posts from a chosen popular subreddit
-*/
-function getSubreddits(subreddit, callback) {
-  var address = subreddit + "/.json";
-  request(address, function(err, result) {
-    var resultObject = JSON.parse(result.body);
-    // making an object for each post
-    var postObj = {};
-    resultObject.data.children.forEach(function(post) {
-      postObj[post.data.title.substring(0, 25) + "..."] = {
-        Title: post.data.title,
-        by: post.data.author,
-        url: "https://www.reddit.com" + post.data.permalink,
-        votes: post.data.ups
-      };
-    });
-    callback(postObj);
-  });
-}
 
-// Export the API
+////////////////////MODULES EXPORT//////////////////////////
+
 module.exports = {
-  //
+  getSortedHomepage: getSortedHomepage,
+  listPosts: listPosts,
+  makePostObj: makePostObj,
+  displayComments: displayComments,
+  getSubreddits: getSubreddits,
+  getPage: getPage,
+  makeCommentObj: makeCommentObj,
+  imageMaker: imageMaker
 };
